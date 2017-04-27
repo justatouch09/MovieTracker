@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form action="/logout" method="post">
+    <button type="submit">Logout</button>
+</form>
+
+<form action="/create-movie" method="post">
+    <input type="text" placeholder="Movie name" name="movieName" width="200"/>
+    <select name="movieGenre">
+        <option selected disabled>Genre</option>
+        <option value="action">Action</option>
+        <option value="comedy">Comedy</option>
+        <option value="family">Family</option>
+        <option value="horror">Horror</option>
+    </select>
+    <select name="movieQuality">
+        <option selected disabled>Quality</option>
+        <option value="hd">HD</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+        <option value="low">Low</option>
+    </select>
+    <input type="number" placeholder="Release Year" name="movieYear"/>
+    <button type="submit">Submit</button>
+    </select>
+    <input type="number" placeholder="Release Year" name="movieYear"/>
+    <button type="submit">Submit</button>
+</form>
+
+<ol>
+    {{#movies}}
+    <li>{{name}} - {{genre}} - {{quality}} - {{releaseYear}} - {{revenue}}</li>
+    {{/movies}}
+</ol>
+</body>
+</html>
