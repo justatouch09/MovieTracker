@@ -10,7 +10,7 @@ public class Movie {
     int revenue;
     int releaseYear;
     int id;
-    int user_id;
+    int User_id;
 
     public Movie(String name, String genre, String quality, int revenue, int releaseYear, int id, int user_id) {
         this.name = name;
@@ -19,7 +19,7 @@ public class Movie {
         this.revenue = revenue;
         this.releaseYear = releaseYear;
         this.id = id;
-        this.user_id = user_id;
+        this.User_id = user_id;
     }
 
     public String getName() {
@@ -67,11 +67,11 @@ public class Movie {
     }
 
     public int getUser_id() {
-        return user_id;
+        return User_id;
     }
 
     public void setUser_id(int user_id) {
-        this.user_id = user_id;
+        this.User_id = user_id;
     }
 
     public void setReleaseYear(int releaseYear) {

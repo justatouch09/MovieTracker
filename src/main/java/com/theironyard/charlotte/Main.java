@@ -1,6 +1,7 @@
 package com.theironyard.charlotte;
 
 import org.h2.tools.Server;
+import org.omg.CORBA.INTERNAL;
 import spark.ModelAndView;
 import spark.Session;
 import spark.Spark;
@@ -12,6 +13,51 @@ import java.util.HashMap;
 
 public class Main {
     static HashMap<String, User> users = new HashMap<>();
+
+    public static void createTables(Connection conn) throws SQLException {
+        Statement stmt = conn.createStatement();
+        stmt.execute("CREATE TABLE IF NOT EXISTS users (id IDENTITY, name VARCHAR, password VARCHAR)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS movies (name VARCHAR, genre VARCHAR, quality VARCHAR, revenue INT, releaseYear INT)");
+    }
+
+    public static void insertUser(Connection conn, String name, String password) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO users VALUES (NULL, ?, ?)");
+        stmt.setString(1, name);
+        stmt.setString(2, password);
+        stmt.execute();
+    }
+
+    public static User selectUser(Connection conn, int id) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE id = ?");
+        stmt.setInt(1, id);
+        ResultSet results = stmt.executeQuery();
+        if (results.next()) {
+            String name = results.getString("name");
+            String password = results.getString("password");
+            ArrayList<Movie> movies = getMoviesByUserId(id);
+            return new User(id, name, password, movies);
+        }
+        return null;
+    }
+
+    private static ArrayList<Movie> getMoviesByUserId(Connection conn,int id) throws SQLException {
+        // make a new arraylist
+        // run the "select * from movies where user_id = ?" query
+        // for each row in the resultset:
+        // 1. make a new movie
+        // 2. add that movie to the arraylist
+        // return the arraylist
+        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM movie where id = ?");
+        stmt.setInt(1, id);
+        ResultSet results = stmt.executeQuery();
+        if (results.next()) {
+            String movie = results.getString("movie");
+            ArrayList<Movie> movies = getMoviesByUserId(id);
+            return new User(id, name, password, movies);
+
+        }
+        return null;
+    }
 
     public static void main(String[] args) throws SQLException {
         Server.createWebServer().start();
@@ -69,6 +115,8 @@ public class Main {
                     String movieQuality = request.queryParams("movieQuality");
                     int movieYear = Integer.valueOf(request.queryParams("movieYear"));
                     int movieRevenue = Integer.valueOf(request.queryParams("movieRevenue"));
+                    int movieId = Integer.valueOf(request.params("movieId"));
+                    int movieUser_id = Integer.valueOf(request.params("movieUser_id"));
                     Movie movie = new Movie(movieName, movieGenre, movieQuality, movieYear, movieRevenue, movieId, movieUser_id);
 
                     user.movies.add(movie);
@@ -89,50 +137,4 @@ public class Main {
         );
     }
 
-    public static void createTables(Connection conn) throws SQLException {
-        Statement stmt = conn.createStatement();
-        stmt.execute("CREATE TABLE IF NOT EXISTS users (id IDENTITY, name VARCHAR, password VARCHAR)");
-        stmt.execute("CREATE TABLE IF NOT EXISTS movies (name VARCHAR, genre VARCHAR, quality VARCHAR, revenue INT, releaseYear INT)");
-    }
-
-    public static void insertUser(Connection conn, String name, String password) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO users VALUES (NULL, ?, ?)");
-        stmt.setString(1, name);
-        stmt.setString(2, password);
-        stmt.execute();
-    }
-
-    public static User selectUser(Connection conn, int id) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE id = ?");
-        stmt.setInt(1, id);
-        ResultSet results = stmt.executeQuery();
-        if (results.next()) {
-            String name = results.getString("name");
-            String password = results.getString("password");
-            ArrayList<Movie> movies = getMoviesByUserId(id);
-            return new User(id, name, password, movies);
-        }
-        return null;
-    }
-
-    private static ArrayList<Movie> getMoviesByUserId(Connection conn,int id) {
-        // make a new arraylist
-        // run the "select * from movies where user_id = ?" query
-        // for each row in the resultset:
-        // 1. make a new movie
-        // 2. add that movie to the arraylist
-        // return the arraylist
-        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users where id = ?");
-        stmt.setInt(1, id);
-        ResultSet results = stmt.executeQuery();
-        if (results.next()) {
-            String movie = results.getString("movie");
-
-        }
-        return new Movie()
-
-    }
-    return movies;
 }
-
-
