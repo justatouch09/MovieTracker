@@ -25,16 +25,14 @@
         <option value="high">High</option>
         <option value="low">Low</option>
     </select>
-    <input type="number" placeholder="Release Year" name="movieYear"/>
-    <button type="submit">Submit</button>
-    </select>
+    <input type="text" placeholder="Revenue" name="movieRevenue" />
     <input type="number" placeholder="Release Year" name="movieYear"/>
     <button type="submit">Submit</button>
 </form>
 
 <ol>
     {{#movies}}
-    <li>{{name}} - {{genre}} - {{quality}} - {{releaseYear}} - {{revenue}}</li>
+    <li>{{name}} - {{genre}} - {{quality}} - {{releaseYear}} - {{revenue}} - {{Id}} - {{User_id}} -</li>
     {{/movies}}
 </ol>
 </body>

@@ -1,3 +1,0 @@
-2017-04-27 14:21:37 jdbc[3]: exception
-org.h2.jdbc.JdbcSQLException: Table "MESSAGES" not found; SQL statement:
-DELETE FROM messages WHERE users (id IDENTITY, user_id INT, reply_id INT, text VARCHAR) [42102-191]

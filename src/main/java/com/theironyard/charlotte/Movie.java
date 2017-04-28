@@ -10,16 +10,19 @@ public class Movie {
     int revenue;
     int releaseYear;
     int id;
-    int User_id;
+    String userName;
 
-    public Movie(String name, String genre, String quality, int revenue, int releaseYear, int id, int user_id) {
+    public Movie(String name, String genre, String quality, int revenue, int releaseYear, String userName) {
         this.name = name;
         this.genre = genre;
         this.quality = quality;
         this.revenue = revenue;
         this.releaseYear = releaseYear;
-        this.id = id;
-        this.User_id = user_id;
+        this.userName = userName;
+    }
+
+    public Movie() {
+
     }
 
     public String getName() {
@@ -66,12 +69,12 @@ public class Movie {
         this.id = id;
     }
 
-    public int getUser_id() {
-        return User_id;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setUser_id(int user_id) {
-        this.User_id = user_id;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public void setReleaseYear(int releaseYear) {

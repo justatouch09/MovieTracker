@@ -8,13 +8,15 @@ import java.util.ArrayList;
 public class User {
     int id;
     String userName;
-    String password;
     ArrayList<Movie> movies = new ArrayList<>();
 
-    public User(int id, String userName, String password, ArrayList<Movie> movies) {
+    public User(String userName) {
+        this.userName = userName;
+    }
+
+    public User(int id, String userName, ArrayList<Movie> movies) {
         this.id = id;
         this.userName = userName;
-        this.password = password;
         this.movies = movies;
     }
 
@@ -32,13 +34,5 @@ public class User {
 
     public void setUserName(String userName) {
         this.userName = userName;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 }

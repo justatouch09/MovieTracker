@@ -1,7 +1,6 @@
 package com.theironyard.charlotte;
 
 import org.h2.tools.Server;
-import org.omg.CORBA.INTERNAL;
 import spark.ModelAndView;
 import spark.Session;
 import spark.Spark;
@@ -12,51 +11,84 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Main {
-    static HashMap<String, User> users = new HashMap<>();
-
     public static void createTables(Connection conn) throws SQLException {
         Statement stmt = conn.createStatement();
-        stmt.execute("CREATE TABLE IF NOT EXISTS users (id IDENTITY, name VARCHAR, password VARCHAR)");
-        stmt.execute("CREATE TABLE IF NOT EXISTS movies (name VARCHAR, genre VARCHAR, quality VARCHAR, revenue INT, releaseYear INT)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS users (id IDENTITY, name VARCHAR)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS movies (id identity, user_name varchar, name VARCHAR, genre VARCHAR, quality VARCHAR, revenue INT, releaseYear INT)");
     }
 
-    public static void insertUser(Connection conn, String name, String password) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO users VALUES (NULL, ?, ?)");
+    public static void insertUser(Connection conn, String name) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO users VALUES (NULL, ?)");
         stmt.setString(1, name);
-        stmt.setString(2, password);
         stmt.execute();
     }
 
-    public static User selectUser(Connection conn, int id) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE id = ?");
-        stmt.setInt(1, id);
+    public static User selectUserByUsername(Connection conn, String userName) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE name = ?");
+        stmt.setString(1, userName);
+
         ResultSet results = stmt.executeQuery();
+
         if (results.next()) {
             String name = results.getString("name");
-            String password = results.getString("password");
-            ArrayList<Movie> movies = getMoviesByUserId(id);
-            return new User(id, name, password, movies);
+            int id = results.getInt("id");
+            ArrayList<Movie> movies = getMoviesByUserName(conn, userName);
+            return new User(id, name, movies);
         }
+
         return null;
     }
 
-    private static ArrayList<Movie> getMoviesByUserId(Connection conn,int id) throws SQLException {
+    private static ArrayList<Movie> getMoviesByUserName(Connection conn, String name) throws SQLException {
         // make a new arraylist
-        // run the "select * from movies where user_id = ?" query
-        // for each row in the resultset:
-        // 1. make a new movie
-        // 2. add that movie to the arraylist
-        // return the arraylist
-        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM movie where id = ?");
-        stmt.setInt(1, id);
-        ResultSet results = stmt.executeQuery();
-        if (results.next()) {
-            String movie = results.getString("movie");
-            ArrayList<Movie> movies = getMoviesByUserId(id);
-            return new User(id, name, password, movies);
+        ArrayList<Movie> movies = new ArrayList<>();
 
+        // run the "select * from movies where user_id = ?" query
+        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM movies where user_name = ?");
+        stmt.setString(1, name);
+
+        ResultSet results = stmt.executeQuery();
+
+        // for each row in the resultset, or
+        // "while the resultset has more rows to process":
+        while (results.next()) {
+            // (id identity, user_id int, name VARCHAR, genre VARCHAR, quality VARCHAR, revenue INT, releaseYear INT)
+
+            // get data from result
+            String movieName = results.getString("name");
+            String genre = results.getString("genre");
+            String quality = results.getString("quality");
+            int revenue = results.getInt("revenue");
+            int releaseYear = results.getInt("releaseYear");
+
+
+            // make a new movie with the data
+
+            //public Movie(String name, String genre, String quality, int revenue, int releaseYear, String userName) {
+            Movie m = new Movie(movieName, genre, quality, revenue, releaseYear, name);
+
+            // add movie to the movies arraylist
+            movies.add(m);
         }
-        return null;
+
+        // return the arraylist
+        return movies;
+    }
+
+    //(id identity, user_id int, name VARCHAR, genre VARCHAR, quality VARCHAR, revenue INT, releaseYear INT)
+    private static void insertMovie(Connection conn, Movie m) throws SQLException {
+        // execute a prepared statement which will insert
+        // a movie into the movies table.
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO movies VALUES (NULL, ?, ?, ?, ?, ?, ?)");
+        stmt.setString(1, m.getUserName());
+        stmt.setString(2, m.getName());
+        stmt.setString(3, m.getGenre());
+        stmt.setString(4, m.getQuality());
+        stmt.setInt(5, m.getRevenue());
+        stmt.setInt(6, m.getReleaseYear());
+        // etc.
+        stmt.execute();
+
     }
 
     public static void main(String[] args) throws SQLException {
@@ -69,14 +101,17 @@ public class Main {
                 "/",
                 (req, res) -> {
                     Session session = req.session();
-                    String name = session.attribute("userName");//id
-                    User user = users.get(name);
+                    String name = session.attribute("userName");
+
+                    User user = selectUserByUsername(conn, name);
 
                     HashMap p = new HashMap<>();
+
                     if (user == null) {
                         return new ModelAndView(p, "login.html");
                     } else {
-                        return new ModelAndView(user, "home.html");
+                        p.put("movies", user.movies);
+                        return new ModelAndView(p, "home.html");
                     }
                 },
                 new MustacheTemplateEngine()
@@ -86,10 +121,14 @@ public class Main {
                 "/login",
                 ((request, response) -> {
                     String name = request.queryParams("loginName");
-                    User user = users.get(name);
-                    if (user == null) {
-                        user = new User(name);
-                        users.put(name, user);
+
+                    // get user by username
+                    User u = selectUserByUsername(conn, name);
+
+                    // if u is null, then the login wasn't found.
+                    // that means we have to insert the user
+                    if (u == null) {
+                        insertUser(conn, name);
                     }
 
                     Session session = request.session();
@@ -101,11 +140,15 @@ public class Main {
         );
 
         Spark.post(
-                "/create-game",
+                "/create-movie",
                 ((request, response) -> {
                     Session session = request.session();
+                    // store userid in session when logged in
                     String name = session.attribute("userName");
-                    User user = users.get(name);
+
+                    // get a user from the database.
+                    User user = selectUserByUsername(conn, name);
+
                     if (user == null) {
                         throw new Exception("User is not logged in");
                     }
@@ -115,12 +158,10 @@ public class Main {
                     String movieQuality = request.queryParams("movieQuality");
                     int movieYear = Integer.valueOf(request.queryParams("movieYear"));
                     int movieRevenue = Integer.valueOf(request.queryParams("movieRevenue"));
-                    int movieId = Integer.valueOf(request.params("movieId"));
-                    int movieUser_id = Integer.valueOf(request.params("movieUser_id"));
-                    Movie movie = new Movie(movieName, movieGenre, movieQuality, movieYear, movieRevenue, movieId, movieUser_id);
 
-                    user.movies.add(movie);
+                    Movie movie = new Movie(movieName, movieGenre, movieQuality, movieRevenue, movieYear, user.getUserName());
 
+                    insertMovie(conn, movie);
                     response.redirect("/");
                     return "";
                 })
@@ -136,5 +177,4 @@ public class Main {
                 })
         );
     }
-
 }
